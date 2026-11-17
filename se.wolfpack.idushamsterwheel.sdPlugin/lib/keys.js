@@ -9,7 +9,8 @@ const C = {
   muted: "#8a93a3", soft: "#9fb4d4", dim: "#5a6270", title: "#ffd9a0", accent: "#ff9a3c",
   ok: "#46d160", warn: "#ffb13c", error: "#e0525b",
 };
-const RUN_FRAMES = 12;    // one loop = 6 spokes × 60° → seamless
+const RUN_FRAMES = 12;    // one loop turns the wheel 90° (4 spokes, 8 rungs) → seamless
+const LOOP_DEG = 90;
 const SLEEP_FRAMES = 24;
 const RUN_MS = 100;       // frame time while running (10 fps)
 const SLEEP_MS = 150;     // frame time while asleep (calmer)
@@ -27,13 +28,13 @@ function wheel(rot, on) {
     `<line x1="${CX - 34}" y1="135" x2="${CX + 34}" y2="135" stroke="${C.line}" stroke-width="4" stroke-linecap="round"/>` +
     `<circle cx="${CX}" cy="${CY}" r="${R}" fill="${C.surface}" stroke="${rim}" stroke-width="3"/>` +
     `<g transform="rotate(${n(rot)} ${CX} ${CY})">`;
-  for (let i = 0; i < 6; i++) {
-    const a = (i * 60 * Math.PI) / 180;
-    s += `<line x1="${CX}" y1="${CY}" x2="${n(CX + Math.cos(a) * (R - 2))}" y2="${n(CY + Math.sin(a) * (R - 2))}" stroke="${C.line}" stroke-width="2"/>`;
+  for (let i = 0; i < 4; i++) { // spokes
+    const a = ((i * 90 + 45) * Math.PI) / 180;
+    s += `<line x1="${CX}" y1="${CY}" x2="${n(CX + Math.cos(a) * (R - 2))}" y2="${n(CY + Math.sin(a) * (R - 2))}" stroke="${on ? "#3c4453" : C.line}" stroke-width="3" stroke-linecap="round"/>`;
   }
-  for (let i = 0; i < 24; i++) { // rungs on the running surface
-    const a = (i * 15 * Math.PI) / 180;
-    s += `<circle cx="${n(CX + Math.cos(a) * (R - 5))}" cy="${n(CY + Math.sin(a) * (R - 5))}" r="1.3" fill="${rim}"/>`;
+  for (let i = 0; i < 8; i++) { // rungs on the running surface: few and thick, so the turning shows
+    const a = (i * 45 * Math.PI) / 180, c = Math.cos(a), si = Math.sin(a);
+    s += `<line x1="${n(CX + c * (R - 12))}" y1="${n(CY + si * (R - 12))}" x2="${n(CX + c * (R - 4))}" y2="${n(CY + si * (R - 4))}" stroke="${rim}" stroke-width="4.5" stroke-linecap="round"/>`;
   }
   return s + `</g><circle cx="${CX}" cy="${CY}" r="4" fill="${C.muted}"/>`;
 }
@@ -80,16 +81,16 @@ function sleeper(f, still) {
 function head(label, labelColor, lamp) {
   const w = 3 * 7.3 + 14;
   const lamps = {
-    ok: `<circle cx="124" cy="26" r="10.5" fill="${C.ok}" opacity="0.18"/><circle cx="124" cy="26" r="6" fill="${C.ok}"/>`,
-    warn: `<circle cx="124" cy="26" r="10.5" fill="${C.warn}" opacity="0.18"/><circle cx="124" cy="26" r="6" fill="${C.warn}"/>`,
-    error: `<circle cx="124" cy="26" r="6" fill="${C.error}"/>`,
-    idle: `<circle cx="124" cy="26" r="6" fill="${C.dim}"/>`,
+    ok: `<circle cx="128" cy="25.5" r="8.5" fill="${C.ok}" opacity="0.18"/><circle cx="128" cy="25.5" r="5" fill="${C.ok}"/>`,
+    warn: `<circle cx="128" cy="25.5" r="8.5" fill="${C.warn}" opacity="0.18"/><circle cx="128" cy="25.5" r="5" fill="${C.warn}"/>`,
+    error: `<circle cx="128" cy="25.5" r="5" fill="${C.error}"/>`,
+    idle: `<circle cx="128" cy="25.5" r="5" fill="${C.dim}"/>`,
   };
   return `<rect width="144" height="144" fill="${C.bg}"/>` +
     `<rect x="4.5" y="4.5" width="135" height="135" rx="16" fill="${C.deep}" stroke="${lamp === "error" ? C.error : C.line}" stroke-width="${lamp === "error" ? 2.5 : 1.5}"/>` +
     `<rect x="13" y="15" width="${w}" height="21" rx="6" fill="${C.surface}" stroke="${C.accent}" stroke-width="1.3"/>` +
     `<text x="${n(13 + w / 2)}" y="29.5" text-anchor="middle" font-family="${MONO}" font-weight="700" font-size="11" letter-spacing="0.8" fill="${C.accent}">BRB</text>` +
-    `<text x="${n(13 + w + 7)}" y="31" font-family="${MONO}" font-weight="600" font-size="14" letter-spacing="1" fill="${labelColor}">${esc(label)}</text>` +
+    `<text x="${n(13 + w + 6)}" y="33" font-family="${MONO}" font-weight="700" font-size="20" fill="${labelColor}">${esc(label)}</text>` +
     (lamps[lamp] || lamps.idle);
 }
 
@@ -98,7 +99,7 @@ const url = (body) => "data:image/svg+xml;base64," +
 
 // on: running? f: frame number · label: text beside the tab · lamp: ok | warn | idle · still: no animation
 function key({ on, f = 0, label, lamp, still = false }) {
-  const rot = on ? (f % RUN_FRAMES) * (60 / RUN_FRAMES) : 0;
+  const rot = on ? (f % RUN_FRAMES) * (LOOP_DEG / RUN_FRAMES) : 0;
   return url(head(label, on ? C.title : C.muted, lamp || (on ? "ok" : "idle")) +
     `<g transform="translate(72 43) scale(0.86) translate(-72 -34.5)">` +
     wheel(rot, on) + (on ? runner(f % RUN_FRAMES) : sleeper(f % SLEEP_FRAMES, still)) + `</g>`);
@@ -120,6 +121,6 @@ function problem({ title, reason, sub }) {
 }
 
 // The wheel and hamster alone (key coordinates, 144 wide) — for the plugin icon
-const art = (on, f = 0) => wheel(on ? (f % RUN_FRAMES) * (60 / RUN_FRAMES) : 0, on) + (on ? runner(f % RUN_FRAMES) : sleeper(f % SLEEP_FRAMES, true));
+const art = (on, f = 0) => wheel(on ? (f % RUN_FRAMES) * (LOOP_DEG / RUN_FRAMES) : 0, on) + (on ? runner(f % RUN_FRAMES) : sleeper(f % SLEEP_FRAMES, true));
 
 module.exports = { key, problem, art, C, RUN_FRAMES, SLEEP_FRAMES, RUN_MS, SLEEP_MS };
