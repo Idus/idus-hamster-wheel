@@ -1,8 +1,11 @@
 {
   "name": "idus-hamster-wheel-dev",
   "private": true,
-  "description": "Dev tools for Idus Hamster Wheel (tests, icons, GIFs) — the plugin itself has no dependencies",
+  "description": "Dev tools for Idus Hamster Wheel (tests, icons, GIFs, Elgato build) \u2014 the plugin itself has no dependencies",
   "devDependencies": {
+    "@elgato/cli": "1.10.4",
+    "@elgato/streamdeck": "2.1.2",
+    "esbuild": "0.28.2",
     "ws": "8.18.0"
   }
 }

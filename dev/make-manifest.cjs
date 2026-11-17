@@ -2,14 +2,14 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const ID = "se.wolfpack.idushamsterwheel";
-const VERSION = "1.0.1";
+const VERSION = "1.1";
 
 const manifest = {
   Name: "Idus Hamster Wheel",
   UUID: ID,
   Version: VERSION,
   Author: "Idus",
-  Description: "Keeps your computer awake from one key: press it and a hamster runs, the screen does not lock and the mouse gets a tiny nudge on a timer (Zen, Nudge, Circle or Random — or stay awake without moving it). Turns itself off after the time you choose, shows a notification with a Stop button, and the hamster sleeps when it is off. Linux (Wayland and X11). Made by Idus with AI assistance (Claude).",
+  Description: "Keeps your computer awake from one key: press it and a hamster runs, the screen does not lock and the mouse gets a tiny nudge on a timer (Zen, Nudge, Circle or Random — or stay awake without moving it). Always turns itself off after the time you choose (15 min – 4 h), shows a notification with a Stop button, and the hamster sleeps when it is off. Linux (Wayland and X11). Made by Idus with AI assistance (Claude).",
   URL: "https://github.com/Idus/idus-hamster-wheel",
   Icon: "imgs/plugin",
   Category: "Idus Hamster Wheel",

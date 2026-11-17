@@ -1,15 +1,17 @@
-// Idus Hamster Wheel · v1.0.1 · build 2026-11-17
-// An OpenDeck key that keeps the computer awake while you are away: press it and a hamster runs,
-// the screen does not lock and the mouse gets a tiny nudge on a timer. Turns itself off after a
-// while. Press again to stop. Zero npm dependencies; the mouse is moved by lib/mover.py.
+// Idus Hamster Wheel · v1.1 · build 2026-11-17
+// A key that keeps the computer awake while you are away: press it and a hamster runs, the screen
+// does not lock and the mouse gets a tiny nudge on a timer. Turns itself off after 15 min – 4 h
+// (never later, on purpose). Press again to stop. OpenDeck on Linux (lib/desktop-linux.js, mouse
+// via lib/mover.py) and Elgato Stream Deck on Windows (lib/desktop-win.js + lib/hamster-win.ps1).
+// Zero npm dependencies.
 "use strict";
 
-const APP_VERSION = "1.0.1";
-const BUILD = "2026-11-17.4"; // shown in the settings panel and the OpenDeck log — tells which copy runs
+const APP_VERSION = "1.1";
+const BUILD = "2026-11-17.5"; // shown in the settings panel and the OpenDeck log — tells which copy runs
 const fs = require("node:fs");
 const sdk = require("./lib/sdk");
 const K = require("./lib/keys");
-const { which, inhibit, Mover, notify } = require("./lib/desktop");
+const { inhibit, Mover, notify, checks, REASONS } = require("./lib/desktop");
 
 const ACTION = "se.wolfpack.idushamsterwheel.wheel";
 const MINUTE = Number(process.env.IDUS_HW_MINUTE_MS) || 60000; // shorter only in tests
@@ -18,11 +20,6 @@ const DEFAULTS = {
   offAfter: "60", show: "left", notify: true, animateOff: true,
 };
 const MODES = { awake: "Stay awake only", zen: "Zen", nudge: "Nudge", circle: "Circle", random: "Random" };
-const REASONS = {
-  access: "no access to /dev/uinput",
-  missing: "no /dev/uinput",
-  python: "python3 is missing",
-};
 
 const keys = new Map();       // context → { settings }
 const inspected = new Set();  // contexts whose settings panel is open
@@ -45,7 +42,8 @@ function cfgOf(settings) {
     every: clamp(int(s.every, 30), 5, 3600),
     random: s.random === true || s.random === "true",
     randMin: lo, randMax: hi,
-    offAfter: clamp(int(s.offAfter, 60), 0, 24 * 60),
+    // Always turns itself off — at most after 4 hours, so a computer is never left awake for good
+    offAfter: int(s.offAfter, 60) <= 0 ? 240 : clamp(int(s.offAfter, 60), 15, 240),
     show: ["left", "on", "next"].includes(s.show) ? s.show : "left",
     notify: s.notify !== false && s.notify !== "false",
     animateOff: s.animateOff !== false && s.animateOff !== "false",
@@ -109,7 +107,7 @@ function startMover() {
 function showRunning() {
   const c = W.cfg;
   const what = c.mode === "awake" ? "Stay awake only" : `${MODES[c.mode]} every ${everyText(c)}`;
-  notify.show("🐹 Hamster Wheel is running", `${what} · ${W.offAt ? `off at ${clock(W.offAt)}` : "no auto-off"}`);
+  notify.show("🐹 Hamster Wheel is running", `${what} · off at ${clock(W.offAt)}`);
 }
 
 function start(ctx) {
@@ -117,13 +115,13 @@ function start(ctx) {
   const cfg = cfgOf(k && k.settings);
   const now = Date.now();
   Object.assign(W, {
-    on: true, owner: ctx, cfg, startedAt: now, offAt: cfg.offAfter ? now + cfg.offAfter * MINUTE : 0,
+    on: true, owner: ctx, cfg, startedAt: now, offAt: now + cfg.offAfter * MINUTE,
     nextAt: now + interval(cfg), moves: 0, warn: "", failMsg: "", failUntil: 0,
   });
   inhibit.start();
   if (cfg.mode !== "awake") startMover();
   if (cfg.notify) showRunning();
-  sdk.log(`Hamster Wheel on: ${cfg.mode}, every ${everyText(cfg)}, off after ${cfg.offAfter || "never"} min, stay awake via ${inhibit.tool || "nothing"}`);
+  sdk.log(`Hamster Wheel on: ${cfg.mode}, every ${everyText(cfg)}, off after ${cfg.offAfter} min, stay awake via ${inhibit.tool || "nothing"}`);
 }
 
 function stop(reason) {
@@ -143,7 +141,7 @@ notify.onStop = () => stop("notification");
 function apply(cfg) {
   const old = W.cfg;
   W.cfg = cfg;
-  W.offAt = cfg.offAfter ? W.startedAt + cfg.offAfter * MINUTE : 0;
+  W.offAt = W.startedAt + cfg.offAfter * MINUTE;
   if (cfg.mode === "awake") mover.stop();
   else if (!mover.running && (old.mode === "awake" || !W.warn)) startMover();
   W.nextAt = Math.min(W.nextAt, Date.now() + interval(cfg));
@@ -161,7 +159,7 @@ function test(ctx) {
   const steps = pattern("circle", 12);
   if (mover.running && mover.ready) { mover.send(steps); reply(true, "The pointer drew a small circle — the mouse can move."); return; }
   const t = new Mover();
-  const timer = setTimeout(() => { t.stop(); reply(false, "No answer from the mouse mover."); }, 6000);
+  const timer = setTimeout(() => { t.stop(); reply(false, "No answer from the mouse mover."); }, 25000);
   t.start((state, kind, text) => {
     if (state === "ready") {
       t.send(steps, () => { clearTimeout(timer); t.stop(); reply(true, "The pointer drew a small circle — the mouse can move."); });
@@ -180,7 +178,7 @@ function draw(ctx, k, now) {
   const s = cfgOf(k.settings);
   let img;
   if (W.on && W.failUntil > now) {
-    img = K.problem({ title: "NO MOUSE", reason: W.failMsg, sub: inhibit.proc ? "still keeps awake" : "" });
+    img = K.problem({ title: "NO MOUSE", reason: W.failMsg, sub: inhibit.active ? "still keeps awake" : "" });
   } else if (W.on) {
     img = K.key({ on: true, f: Math.floor(now / K.RUN_MS), label: label(s.show, now), lamp: W.warn ? "warn" : "ok" });
   } else {
@@ -190,11 +188,6 @@ function draw(ctx, k, now) {
   sdk.setImage(ctx, img);
 }
 
-function uinputState() {
-  try { fs.accessSync("/dev/uinput", fs.constants.W_OK); return "ok"; }
-  catch (e) { return e.code === "ENOENT" ? "missing" : "access"; }
-}
-
 function info() {
   const now = Date.now();
   return {
@@ -202,9 +195,7 @@ function info() {
     on: W.on, mode: W.on ? W.cfg.mode : "", elapsed: W.on ? now - W.startedAt : 0,
     left: W.on && W.offAt ? W.offAt - now : 0, offAt: W.on && W.offAt ? clock(W.offAt) : "",
     nextIn: W.on && mover.running ? Math.max(0, W.nextAt - now) : 0, moves: W.moves,
-    warn: W.warn, failMsg: W.failMsg,
-    awake: inhibit.available(), awakeActive: !!inhibit.proc,
-    python: !!which("python3"), uinput: uinputState(), notify: notify.available(),
+    warn: W.warn, failMsg: W.failMsg, ...checks(), awakeActive: inhibit.active,
     test: W.test && now - W.test.at < 15000 ? W.test : null,
   };
 }

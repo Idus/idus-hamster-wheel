@@ -2,6 +2,14 @@
 
 All notable changes to Idus Hamster Wheel. Format: [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.1] – 2026-11-17
+
+### Added
+- **Windows edition for the Elgato Stream Deck app** (`se.wolfpack.idushamsterwheel.streamDeckPlugin`): the same key and settings. One small helper (Windows PowerShell + a few lines of C#, plain text in the plugin) keeps the computer awake with Windows' own call (like PowerToys Awake), moves the mouse with `SendInput` and shows a hamster in the system tray with **Stop** in its menu. No admin rights, no settings changed, ends with the plugin.
+
+### Changed
+- **It always turns itself off**: "Never" is gone, the longest is 4 hours — a computer is never left awake and unlocked for good. A key that was set to Never now turns off after 4 hours.
+
 ## [1.0.1] – 2026-11-17
 
 ### Changed

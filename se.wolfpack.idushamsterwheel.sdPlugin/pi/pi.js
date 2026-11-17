@@ -1,8 +1,10 @@
-// Settings panel wiring for Idus Hamster Wheel (OpenDeck property inspector).
-// Fields with data-setting="name" are loaded from and saved to the key's settings (on the key's
-// context). Blocks with data-when="setting:value value" only show when that setting has one of
-// those values (checkboxes: true / false).
+// Settings panel wiring for Idus Hamster Wheel — OpenDeck (Linux) and Elgato Stream Deck (Windows).
+// Fields with data-setting="name" are loaded from and saved to the key's settings. OpenDeck wants
+// messages on the key's context, Stream Deck on the panel's own id (<html data-target="elgato">).
+// Blocks with data-when="setting:value value" only show when that setting has one of those values
+// (checkboxes: true / false).
 (function () {
+  const ELG = document.documentElement.dataset.target === "elgato";
   let socket = null, context = null, action = null, settings = {};
   const infoFns = [];
 
@@ -40,7 +42,7 @@
 
   function start(port, uuid, registerEvent, _info, actionInfo) {
     const a = typeof actionInfo === "string" ? JSON.parse(actionInfo) : actionInfo;
-    context = a.context; action = a.action;
+    context = ELG ? uuid : a.context; action = a.action;
     settings = (a.payload && a.payload.settings) || {};
     fill();
     socket = new WebSocket("ws://127.0.0.1:" + port);
@@ -72,7 +74,8 @@
       const a = e.target.closest && e.target.closest("a[href^='http']");
       if (!a) return;
       e.preventDefault();
-      window.open(a.href, "_blank");
+      if (ELG) { if (socket && socket.readyState === 1) socket.send(JSON.stringify({ event: "openUrl", payload: { url: a.href } })); }
+      else window.open(a.href, "_blank");
     });
     // Copy buttons: data-copy-pre="<id of the pre>"
     document.querySelectorAll("[data-copy-pre]").forEach((btn) => {
@@ -90,7 +93,7 @@
       });
     });
     const f = document.querySelector("footer[data-idus]");
-    if (f) f.innerHTML = 'Made by Idus, with AI assistance (Claude) · <a href="https://github.com/Idus/idus-hamster-wheel">GitHub</a> · ' +
-      '<a href="https://ko-fi.com/N4N2QZHKK">☕ Tip me on Ko-fi</a>';
+    if (f) f.innerHTML = 'Made by Idus, with AI assistance (Claude) · <a href="https://github.com/Idus/idus-hamster-wheel">GitHub</a>' +
+      (ELG ? " — help, source and feedback" : ' · <a href="https://ko-fi.com/N4N2QZHKK">☕ Tip me on Ko-fi</a>');
   });
 })();

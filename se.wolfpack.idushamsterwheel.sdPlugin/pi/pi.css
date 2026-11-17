@@ -111,3 +111,5 @@ details.more b.warn { color: var(--warn); }
 .hint.ok { color: var(--ok); } .hint.error { color: var(--error); }
 /* three groups side by side in OpenDeck's wide, low panel */
 .settings { grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); }
+/* text for one platform only: <html data-target="elgato"> = Windows / Stream Deck */
+html[data-target="elgato"] .only-linux, html:not([data-target="elgato"]) .only-win { display: none !important; }

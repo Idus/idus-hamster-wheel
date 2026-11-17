@@ -7,16 +7,20 @@ const path = require("node:path");
 const { chromium } = require("playwright");
 const { WebSocketServer } = require(process.env.WS_MODULE || "ws");
 
-const PI = path.join(__dirname, "..", "se.wolfpack.idushamsterwheel.sdPlugin", "pi", "wheel.html");
+// PI_FILE: another build's page, e.g. build/elgato/…/pi/wheel.html (Windows info is used then)
+const PI = path.resolve(process.env.PI_FILE || path.join(__dirname, "..", "se.wolfpack.idushamsterwheel.sdPlugin", "pi", "wheel.html"));
+const WIN = /elgato/.test(PI);
 const out = path.resolve(process.argv[2] || "pi-shots");
 fs.mkdirSync(out, { recursive: true });
 
-const base = { type: "info", app: "Idus Hamster Wheel", version: "1.0", awake: "kde-inhibit", python: true, notify: true, moves: 0, warn: "", failMsg: "" };
+const base = WIN
+  ? { type: "info", app: "Idus Hamster Wheel", version: "1.1", build: "test", platform: "win32", mouse: "ok", awake: "Windows", notify: "tray", moves: 0, warn: "", failMsg: "" }
+  : { type: "info", app: "Idus Hamster Wheel", version: "1.1", build: "test", platform: "linux", mouse: "ok", awake: "kde-inhibit", notify: "gdbus", moves: 0, warn: "", failMsg: "" };
 const cases = {
-  running: { settings: {}, info: { ...base, on: true, elapsed: 312000, left: 3288000, moves: 10, awakeActive: true, uinput: "ok",
+  running: { settings: {}, info: { ...base, on: true, elapsed: 312000, left: 3288000, moves: 10, awakeActive: true, mouse: "ok",
     test: { ok: true, msg: "The pointer drew a small circle — the mouse can move.", at: 1 } } },
-  random: { settings: { mode: "circle", distance: "8", random: true, show: "next" }, info: { ...base, on: false, uinput: "ok" } },
-  noaccess: { settings: { mode: "nudge" }, info: { ...base, on: false, uinput: "access" } },
+  random: { settings: { mode: "circle", distance: "8", random: true, show: "next" }, info: { ...base, on: false } },
+  noaccess: { settings: { mode: "nudge" }, info: { ...base, on: false, mouse: WIN ? "powershell" : "access" } },
 };
 
 (async () => {
@@ -36,7 +40,7 @@ const cases = {
       page.on("pageerror", (e) => errors.push(e.message));
       await page.addInitScript(() => { window.__opened = []; window.open = (u, t) => { window.__opened.push(u); }; });
       await page.goto("file://" + PI);
-      await page.evaluate(([port, settings]) => window.connectSocket(port, "ctx", "registerPropertyInspector", "{}",
+      await page.evaluate(([port, settings]) => window.connectSocket(port, document.documentElement.dataset.target === "elgato" ? "pi" : "ctx", "registerPropertyInspector", "{}",
         JSON.stringify({ action: "se.wolfpack.idushamsterwheel.wheel", context: "ctx", payload: { settings } })), [port, c.settings]);
       await page.waitForTimeout(500);
       const visible = await page.evaluate(() => [...document.querySelectorAll("[data-when]")].filter((e) => !e.hidden).map((e) => e.dataset.when));

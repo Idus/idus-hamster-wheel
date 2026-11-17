@@ -8,10 +8,7 @@ const K = require("../se.wolfpack.idushamsterwheel.sdPlugin/lib/keys");
 const P = path.join(__dirname, "..", "se.wolfpack.idushamsterwheel.sdPlugin");
 const ROOT = path.join(__dirname, "..");
 
-// Hamster wheel glyph on a 40 × 40 grid: wheel with three spokes, stand, hamster at the bottom
-const glyph = `<circle cx="20" cy="17" r="12"/><path d="M20 17 V5 M20 17 L9.6 11 M20 17 L30.4 11"/>` +
-  `<path d="M14.5 27.5 L11 35 M25.5 27.5 L29 35 M8 35 H32"/>` +
-  `<g fill="#ff9a3c" stroke="none"><ellipse cx="18.6" cy="24.4" rx="5" ry="2.9"/><circle cx="24" cy="23.2" r="2.4"/></g>`;
+const glyph = require("./icon-glyph.cjs")("#ff9a3c");
 const listIcon = (scale) => `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none" stroke-linecap="round" stroke-linejoin="round">` +
   `<rect width="40" height="40" fill="#262b36"/>` +
   `<g transform="translate(20 20) scale(${scale}) translate(-20 -20)" stroke="#ff9a3c" stroke-width="2.75">${glyph}</g></svg>`;
@@ -79,6 +76,14 @@ fs.writeFileSync(path.join(ROOT, "idus-hamster-wheel.svg"), big);
   await shot(big, 512, path.join(P, "imgs/plugin@2x.png"));
   await shot(keySvg, 72, path.join(P, "imgs/key.png"));
   await shot(keySvg, 144, path.join(P, "imgs/key@2x.png"));
+  // Windows tray icon (Elgato edition): the glyph on a dark rounded square, 16–64 px in one .ico
+  const tray = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 40 40" fill="none" stroke-linecap="round" stroke-linejoin="round">` +
+    `<rect x="0.5" y="0.5" width="39" height="39" rx="8" fill="#16181d"/><g stroke="#ff9a3c" stroke-width="3.2">${glyph}</g></svg>`;
+  const tmp = fs.mkdtempSync(path.join(require("node:os").tmpdir(), "hw-ico-"));
+  const sizes = [16, 24, 32, 48, 64];
+  for (const n of sizes) await shot(tray, n, path.join(tmp, `${n}.png`));
+  require("node:child_process").execFileSync("convert", [...sizes.map((n) => path.join(tmp, `${n}.png`)), path.join(P, "imgs/tray.ico")]);
+  fs.rmSync(tmp, { recursive: true, force: true });
   await browser.close();
   console.log("icons done");
 })();

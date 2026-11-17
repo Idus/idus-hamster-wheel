@@ -10,7 +10,9 @@ const { spawn } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const PLUGIN = path.join(__dirname, "..", "se.wolfpack.idushamsterwheel.sdPlugin");
+// FAKE_PLUGIN_DIR / FAKE_ENTRY: test another build, e.g. the Elgato bundle (build/elgato/…/bin/plugin.js)
+const PLUGIN = path.resolve(process.env.FAKE_PLUGIN_DIR || path.join(__dirname, "..", "se.wolfpack.idushamsterwheel.sdPlugin"));
+const ENTRY = process.env.FAKE_ENTRY || "plugin.js";
 const ID = "se.wolfpack.idushamsterwheel";
 const out = path.resolve(process.argv[2] || "out");
 const seconds = Number(process.argv[3] || 16);
@@ -95,7 +97,7 @@ const info = { application: { font: "", language: "en", platform: "linux", platf
   devices: [{ id: "dev", name: "Stream Deck XL", size: { columns: 8, rows: 4 }, type: 2 }] };
 const env = { ...process.env, PATH: `${bin}:${process.env.PATH}`, IDUS_HW_MINUTE_MS: "600" };
 if (process.env.DRYRUN === "1") Object.assign(env, { IDUS_HW_DRYRUN: "1", IDUS_HW_DRYLOG: path.join(out, "moves.log") });
-const child = spawn(process.execPath, ["plugin.js", "-port", String(port), "-pluginUUID", ID, "-registerEvent", "registerPlugin",
+const child = spawn(process.execPath, [ENTRY, "-port", String(port), "-pluginUUID", ID, "-registerEvent", "registerPlugin",
   "-info", JSON.stringify(info)], { cwd: PLUGIN, env });
 let errs = "";
 child.stderr.on("data", (d) => { errs += d; });

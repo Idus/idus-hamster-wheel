@@ -9,6 +9,8 @@ DRYRUN=1 node fake-opendeck.cjs out 16 # plugin under a fake OpenDeck: press, se
 node test-pi.cjs pi-shots              # settings panel in Chromium + screenshots
 node sheet.cjs out.png a.svg b.svg     # key snapshots side by side
 bash package.sh                        # dist/se.wolfpack.idushamsterwheel.sdPlugin.zip
+node build-elgato.cjs                  # build/elgato/…streamDeckPlugin (Windows, Elgato Stream Deck)
+node make-store.cjs                    # docs/elgato-store/ (after build-elgato)
 ```
 
 Version bump: `make-manifest.cjs` VERSION, the `plugin.js` header + APP_VERSION, the installer header, `pi/wheel.html` eyebrow and CHANGELOG. The manifest Version must equal the release tag minus "v".
@@ -16,5 +18,5 @@ Version bump: `make-manifest.cjs` VERSION, the `plugin.js` header + APP_VERSION,
 Release (from a fresh clone, not the SMB share):
 
 ```bash
-cd ~ && rm -rf /tmp/hw-build && git clone -q https://github.com/Idus/idus-hamster-wheel /tmp/hw-build && cd /tmp/hw-build && bash dev/package.sh >/dev/null && awk '/^## \[X.Y\]/{f=1;next} /^## \[/{f=0} f' CHANGELOG.md > /tmp/notes-hw.md && gh release create vX.Y --title "Idus Hamster Wheel vX.Y" --notes-file /tmp/notes-hw.md dist/se.wolfpack.idushamsterwheel.sdPlugin.zip install-idus-hamster-wheel.sh idus-hamster-wheel.png
+cd ~ && rm -rf /tmp/hw-build && git clone -q https://github.com/Idus/idus-hamster-wheel /tmp/hw-build && cd /tmp/hw-build && bash dev/package.sh >/dev/null && (cd dev && npm install --silent) && node dev/build-elgato.cjs && awk '/^## \[X.Y\]/{f=1;next} /^## \[/{f=0} f' CHANGELOG.md > /tmp/notes-hw.md && gh release create vX.Y --title "Idus Hamster Wheel vX.Y" --notes-file /tmp/notes-hw.md dist/se.wolfpack.idushamsterwheel.sdPlugin.zip install-idus-hamster-wheel.sh idus-hamster-wheel.png build/elgato/se.wolfpack.idushamsterwheel.streamDeckPlugin
 ```

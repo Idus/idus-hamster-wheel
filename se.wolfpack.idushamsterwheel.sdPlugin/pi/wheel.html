@@ -10,7 +10,7 @@
 <body>
 <div class="layout">
   <section class="about">
-    <span class="eyebrow" id="eyebrow">Idus Hamster Wheel · v1.0.1</span>
+    <span class="eyebrow" id="eyebrow">Idus Hamster Wheel · v1.1</span>
     <div class="titlerow"><span class="tab">BRB</span><h1>Hamster Wheel</h1></div>
     <p class="lede">Keeps the computer awake while you are away. Press the key: the hamster runs, the screen stays on and the mouse gets a tiny nudge on a timer. Press again — or let it turn itself off — to stop.</p>
     <div class="btnrow statusrow">
@@ -68,7 +68,7 @@
       <label>Turn off after
         <select data-setting="offAfter" data-default="60">
           <option value="15">15 min</option><option value="30">30 min</option><option value="60">1 hour</option>
-          <option value="120">2 hours</option><option value="240">4 hours</option><option value="0">Never</option>
+          <option value="120">2 hours</option><option value="240">4 hours</option>
         </select>
       </label>
     </section>
@@ -82,7 +82,7 @@
           <option value="next">Countdown to the next move</option>
         </select>
       </label>
-      <label class="check"><input type="checkbox" data-setting="notify" data-default="true"> Notification while it runs (with a Stop button)</label>
+      <label class="check"><input type="checkbox" data-setting="notify" data-default="true"> <span class="only-linux">Notification while it runs (with a Stop button)</span><span class="only-win">Hamster in the system tray while it runs (right-click: Stop)</span></label>
       <label class="check"><input type="checkbox" data-setting="animateOff" data-default="true"> Sleeping hamster when off (animated)</label>
       <div class="checks" id="checks"></div>
     </section>
@@ -105,6 +105,7 @@
     return s >= 3600 ? Math.floor(s / 3600) + " h " + String(Math.floor((s % 3600) / 60)).padStart(2, "0") + " min"
       : Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
   const FIX = {
+    python: ["The mouse is moved by a small Python script, and python3 was not found. On Arch/CachyOS:", "sudo pacman -S --needed python"],
     access: ["Your user may not write to /dev/uinput, so the mouse cannot be moved. This udev rule gives the person at the computer access to it, the same way Steam does for controllers:",
       "echo 'KERNEL==\"uinput\", SUBSYSTEM==\"misc\", TAG+=\"uaccess\", OPTIONS+=\"static_node=uinput\"' | sudo tee /etc/udev/rules.d/60-idus-uinput.rules && sudo udevadm control --reload && sudo udevadm trigger --name-match=uinput"],
     missing: ["The uinput kernel module is not loaded, so there is no /dev/uinput. This loads it now and at every start:",
@@ -125,17 +126,19 @@
       st.textContent = "● Running · " + (i.left ? fmt(i.left) + " left" : fmt(i.elapsed)) + (i.moves ? " · " + i.moves + " moves" : "");
     } else { st.className = "pill"; st.textContent = "○ Off"; }
 
-    const mouse = i.uinput !== "ok" ? ["error", i.uinput === "missing" ? "no /dev/uinput" : "no access to /dev/uinput"]
-      : !i.python ? ["error", "python3 is missing"] : i.warn ? ["warn", i.failMsg] : ["ok", "ready (/dev/uinput)"];
-    const awake = i.awake ? ["ok", (i.awakeActive ? "active · " : "") + i.awake] : ["warn", "no kde-inhibit / systemd-inhibit"];
-    const note = i.notify ? ["ok", "ready (gdbus)"] : ["warn", "gdbus is missing"];
-    $("checks").innerHTML = [["Mouse", mouse], ["Stay awake", awake], ["Notification", note]].map(([k, [c, t]]) =>
+    const win = i.platform === "win32";
+    const MOUSE = { missing: "no /dev/uinput", access: "no access to /dev/uinput", python: "python3 is missing", powershell: "Windows PowerShell is missing" };
+    const mouse = i.mouse !== "ok" ? ["error", MOUSE[i.mouse] || i.mouse]
+      : i.warn ? ["warn", i.failMsg] : ["ok", win ? "ready (SendInput)" : "ready (/dev/uinput)"];
+    const awake = i.awake ? ["ok", (i.awakeActive ? "active · " : "") + (win ? "Windows, like PowerToys Awake" : i.awake)] : ["warn", "no kde-inhibit / systemd-inhibit"];
+    const note = win ? ["ok", "hamster in the system tray"] : i.notify ? ["ok", "ready (gdbus)"] : ["warn", "gdbus is missing"];
+    $("checks").innerHTML = [["Mouse", mouse], ["Stay awake", awake], [win ? "On screen" : "Notification", note]].map(([k, [c, t]]) =>
       `<div class="checkrow"><span class="dot ${c}">●</span><span class="ck">${k}</span><span class="cv" title="${t}">${t}</span></div>`).join("");
 
-    const fix = i.uinput !== "ok" ? FIX[i.uinput] : i.warn === "access" || i.warn === "missing" ? FIX[i.warn] : null;
+    // One-line fixes, Linux only (the plugin never changes system settings itself)
+    const fix = win ? null : FIX[i.mouse] || (i.warn === "access" || i.warn === "missing" ? FIX[i.warn] : null);
     $("fix").hidden = !fix;
     if (fix) { $("fixwhy").textContent = fix[0]; $("fixcmd").textContent = fix[1]; }
-    if (!i.python) { $("fix").hidden = false; $("fixwhy").textContent = "The mouse is moved by a small Python script, and python3 was not found. On Arch/CachyOS:"; $("fixcmd").textContent = "sudo pacman -S --needed python"; }
 
     if (i.test && (!lastTest || i.test.at !== lastTest)) {
       lastTest = i.test.at;
