@@ -1,0 +1,8 @@
+{
+  "name": "idus-hamster-wheel-dev",
+  "private": true,
+  "description": "Dev tools for Idus Hamster Wheel (tests, icons, GIFs) — the plugin itself has no dependencies",
+  "devDependencies": {
+    "ws": "8.18.0"
+  }
+}
