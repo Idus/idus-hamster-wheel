@@ -1,11 +1,11 @@
-// Idus Hamster Wheel · v1.0 · build 2026-11-17
+// Idus Hamster Wheel · v1.0.1 · build 2026-11-17
 // An OpenDeck key that keeps the computer awake while you are away: press it and a hamster runs,
 // the screen does not lock and the mouse gets a tiny nudge on a timer. Turns itself off after a
 // while. Press again to stop. Zero npm dependencies; the mouse is moved by lib/mover.py.
 "use strict";
 
-const APP_VERSION = "1.0";
-const BUILD = "2026-11-17.3"; // shown in the settings panel and the OpenDeck log — tells which copy runs
+const APP_VERSION = "1.0.1";
+const BUILD = "2026-11-17.4"; // shown in the settings panel and the OpenDeck log — tells which copy runs
 const fs = require("node:fs");
 const sdk = require("./lib/sdk");
 const K = require("./lib/keys");

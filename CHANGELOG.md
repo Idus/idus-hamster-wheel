@@ -2,6 +2,12 @@
 
 All notable changes to Idus Hamster Wheel. Format: [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.0.1] – 2026-11-17
+
+### Changed
+- New icon in the style of the other Idus apps: glossy frame, teal glow, reticle and code lines.
+- The settings panel and OpenDeck's log show the build, so you can see which copy is running.
+
 ## [1.0] – 2026-11-17
 
 ### Added

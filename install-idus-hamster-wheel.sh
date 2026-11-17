@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Idus Hamster Wheel installer  ·  v1.0  ·  build 2026-11-17
+# Idus Hamster Wheel installer  ·  v1.0.1  ·  build 2026-11-17
 # Installs the Idus Hamster Wheel plugin into OpenDeck (native or Flatpak) for the current user.
 #   bash install-idus-hamster-wheel.sh             install / update
 #   bash install-idus-hamster-wheel.sh --uninstall remove the plugin (your key layout stays in OpenDeck)

@@ -1,7 +1,7 @@
 {
   "Name": "Idus Hamster Wheel",
   "UUID": "se.wolfpack.idushamsterwheel",
-  "Version": "1.0",
+  "Version": "1.0.1",
   "Author": "Idus",
   "Description": "Keeps your computer awake from one key: press it and a hamster runs, the screen does not lock and the mouse gets a tiny nudge on a timer (Zen, Nudge, Circle or Random — or stay awake without moving it). Turns itself off after the time you choose, shows a notification with a Stop button, and the hamster sleeps when it is off. Linux (Wayland and X11). Made by Idus with AI assistance (Claude).",
   "URL": "https://github.com/Idus/idus-hamster-wheel",

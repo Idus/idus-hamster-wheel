@@ -2,7 +2,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const ID = "se.wolfpack.idushamsterwheel";
-const VERSION = "1.0";
+const VERSION = "1.0.1";
 
 const manifest = {
   Name: "Idus Hamster Wheel",
