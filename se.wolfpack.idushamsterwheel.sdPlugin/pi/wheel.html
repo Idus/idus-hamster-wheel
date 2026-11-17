@@ -10,7 +10,7 @@
 <body>
 <div class="layout">
   <section class="about">
-    <span class="eyebrow">Idus Hamster Wheel · v1.0</span>
+    <span class="eyebrow" id="eyebrow">Idus Hamster Wheel · v1.0</span>
     <div class="titlerow"><span class="tab">BRB</span><h1>Hamster Wheel</h1></div>
     <p class="lede">Keeps the computer awake while you are away. Press the key: the hamster runs, the screen stays on and the mouse gets a tiny nudge on a timer. Press again — or let it turn itself off — to stop.</p>
     <div class="btnrow statusrow">
@@ -118,6 +118,7 @@
   });
 
   PI.onInfo((i) => {
+    if (i.version) $("eyebrow").textContent = "Idus Hamster Wheel · v" + i.version + (i.build ? " · build " + i.build : "");
     const st = $("state");
     if (i.on) {
       st.className = "pill " + (i.warn ? "warnp" : "ok");

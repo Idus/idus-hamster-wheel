@@ -5,6 +5,7 @@
 "use strict";
 
 const APP_VERSION = "1.0";
+const BUILD = "2026-11-17.3"; // shown in the settings panel and the OpenDeck log — tells which copy runs
 const fs = require("node:fs");
 const sdk = require("./lib/sdk");
 const K = require("./lib/keys");
@@ -197,7 +198,7 @@ function uinputState() {
 function info() {
   const now = Date.now();
   return {
-    type: "info", app: "Idus Hamster Wheel", version: APP_VERSION,
+    type: "info", app: "Idus Hamster Wheel", version: APP_VERSION, build: BUILD,
     on: W.on, mode: W.on ? W.cfg.mode : "", elapsed: W.on ? now - W.startedAt : 0,
     left: W.on && W.offAt ? W.offAt - now : 0, offAt: W.on && W.offAt ? clock(W.offAt) : "",
     nextIn: W.on && mover.running ? Math.max(0, W.nextAt - now) : 0, moves: W.moves,
@@ -257,4 +258,7 @@ process.on("exit", cleanup);
 for (const sig of ["SIGTERM", "SIGINT", "SIGHUP"]) process.on(sig, () => process.exit(0));
 
 module.exports = { pattern, cfgOf, fmt }; // for tests
-if (require.main === module) sdk.connect();
+if (require.main === module) {
+  sdk.connect();
+  setTimeout(() => sdk.log(`Idus Hamster Wheel v${APP_VERSION} (build ${BUILD}) running from ${__dirname}`), 1000);
+}
